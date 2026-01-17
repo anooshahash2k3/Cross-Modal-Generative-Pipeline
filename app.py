@@ -1,77 +1,65 @@
 import streamlit as st
 from transformers import pipeline
 from gtts import gTTS
-from diffusers import StableDiffusionPipeline
-import torch
-from PIL import Image
 import io
+import requests
 
-# --- 1. SETUP & PAGE CONFIG ---
-st.set_page_config(page_title="Multimodal Creator AI", layout="wide")
-st.title("🎨 Multimodal Creator: Voice, Text & Vision")
+# --- 1. SETUP ---
+st.set_page_config(page_title="AI Creative Engine", layout="wide")
+st.title("🎨 Cross-Modal Creative Engine")
+st.markdown("### Audio (STT) ➔ Text (NLP) ➔ Image (Diffusion) ➔ Voice (TTS)")
 
-# --- 2. LOAD MODELS (CACHED) ---
+# --- 2. LOAD MODELS ---
 @st.cache_resource
-def load_stt_model():
-    # Whisper for Speech-to-Text
+def load_stt():
+    # tiny model to save memory
     return pipeline("automatic-speech-recognition", model="openai/whisper-tiny")
 
-@st.cache_resource
-def load_image_model():
-    # Stable Diffusion for Image Gen (Small version for speed)
-    model_id = "segmind/Segmind-VegaRT" # High-speed small model
-    pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32)
-    return pipe
+stt_pipe = load_stt()
 
-stt_pipe = load_stt_model()
+# --- 3. INPUT ---
+audio_file = st.audio_input("Record your image description:")
 
-# --- 3. INPUT SECTION ---
-st.header("1. Input Your Vibe")
-audio_file = st.audio_input("Record your voice (describe an image)")
-
-# --- 4. PROCESSING ---
 if audio_file:
-    with st.spinner("Step 1: Transcribing Audio..."):
-        # Speech to Text
-        audio_bytes = audio_file.read()
-        transcription = stt_pipe(audio_bytes)["text"]
-        st.success(f"**Transcribed Text:** {transcription}")
+    # Read audio bytes
+    audio_bytes = audio_file.read()
+    
+    with st.spinner("🎙️ Transcribing Voice..."):
+        try:
+            # We pass the bytes directly to the pipeline
+            transcription = stt_pipe(audio_bytes)["text"]
+            st.success(f"**AI Heard:** {transcription}")
+        except Exception as e:
+            st.error(f"Transcription Error: {e}. Check if packages.txt has ffmpeg.")
+            transcription = ""
 
-    # Create two columns for outputs
-    col1, col2 = st.columns(2)
+    if transcription:
+        col1, col2 = st.columns(2)
 
-    with col1:
-        st.header("2. Generated Image")
-        with st.spinner("Dreaming up the image..."):
-            # Text to Image (Stable Diffusion)
-            # Note: On free CPUs, this part is heavy. 
-            # If it times out, we use a placeholder or a lighter model.
-            try:
-                # For demo purposes, we'll simulate the heavy gen or use a fast API
-                # If you have a GPU, uncomment the image gen lines below:
-                # image = image_pipe(transcription).images[0]
-                st.image("https://placehold.co/600x400?text=AI+Generating+Image...", caption="Image generation is heavy for free CPUs.")
-                st.info("In a full environment, Stable Diffusion would render your prompt here.")
-            except Exception as e:
-                st.error("Image generation skipped due to hardware limits.")
+        with col1:
+            st.header("🖼️ Generated Image")
+            with st.spinner("Generating Art..."):
+                # Using Pollinations API: Fast, Free, No Token Needed
+                # This ensures your app NEVER crashes from memory limits
+                encoded_prompt = transcription.replace(" ", "%20")
+                image_url = f"https://pollinations.ai/p/{encoded_prompt}?width=1024&height=1024&seed=42&model=flux"
+                st.image(image_url, caption=f"Result for: {transcription}")
 
-    with col2:
-        st.header("3. Voice Synthesis")
-        with st.spinner("Synthesizing Voice..."):
-            # Text to Speech
-            tts_text = f"You asked for: {transcription}"
-            tts = gTTS(text=tts_text, lang='en')
-            audio_buffer = io.BytesIO()
-            tts.write_to_fp(audio_buffer)
-            st.audio(audio_buffer)
-            st.write("This is the AI repeating your prompt back to you.")
+        with col2:
+            st.header("🔊 AI Voice Response")
+            with st.spinner("Converting to Speech..."):
+                response_text = f"I have generated an image based on your request: {transcription}"
+                tts = gTTS(text=response_text, lang='en')
+                audio_fp = io.BytesIO()
+                tts.write_to_fp(audio_fp)
+                st.audio(audio_fp)
 
-else:
-    st.info("Awaiting voice input...")
-
-# --- 5. TECH SPECS FOR THE DR. ---
-with st.expander("🎓 Technical Architecture"):
-    st.write("- **STT:** OpenAI Whisper (Transformer-based Seq2Seq)")
-    st.write("- **Image Gen:** Latent Diffusion Models (LDM)")
-    st.write("- **TTS:** Concatenative Synthesis (gTTS)")
-    st.write("- **Logic:** Cross-modal feature mapping")
+# --- 4. THE DOCTOR'S CORNER ---
+with st.expander("🎓 Technical Summary for Dr. of AI"):
+    st.write("""
+    **Architectural Highlights:**
+    - **Modality 1 (Audio):** Utilized OpenAI Whisper (Tiny) for zero-shot ASR (Automatic Speech Recognition).
+    - **Modality 2 (Vision):** Leveraged a RESTful API call to a Stable Diffusion / Flux backend to perform inference without exceeding Streamlit's 1GB RAM limit.
+    - **Modality 3 (Speech):** Implemented gTTS for concatenative text-to-speech synthesis.
+    - **Deployment:** Managed system-level dependencies via `packages.txt` to provide the FFmpeg binaries required for binary-to-waveform conversion.
+    """)
