@@ -6,7 +6,7 @@ import urllib.parse  # This is the secret for fixing the images!
 
 # --- 1. SETUP ---
 st.set_page_config(page_title="AI Creative Engine", layout="wide")
-st.title("🎨 Cross-Modal Creative Engine")
+st.title("Cross-Modal Creative Engine")
 
 # --- 2. LOAD MODELS ---
 @st.cache_resource
@@ -19,17 +19,17 @@ stt_pipe = load_stt()
 col_in1, col_in2 = st.columns(2)
 
 with col_in1:
-    st.header("🎙️ Voice to Image")
+    st.header("Voice to Image")
     audio_file = st.audio_input("Record a description:")
 
 with col_in2:
-    st.header("✍️ Text to Speech")
+    st.header("Text to Speech")
     custom_text = st.text_input("Type something for the AI to say:")
 
 # --- 4. PROCESSING VOICE ➔ IMAGE ---
 if audio_file:
     audio_bytes = audio_file.read()
-    with st.spinner("🎙️ Transcribing..."):
+    with st.spinner("Transcribing..."):
         try:
             transcription = stt_pipe(audio_bytes)["text"]
             st.success(f"**AI Heard:** {transcription}")
@@ -41,14 +41,14 @@ if audio_file:
             # Using the latest Flux model via Pollinations for high accuracy
             image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&model=flux&nologo=true"
             
-            st.subheader("🖼️ Generated Art")
+            st.subheader("Generated Art")
             st.image(image_url, caption=f"Visual result for: {transcription}")
         except Exception as e:
             st.error(f"Error: {e}")
 
 # --- 5. PROCESSING TEXT ➔ VOICE ---
 if custom_text:
-    st.subheader("🔊 AI Voice Response")
+    st.subheader("AI Voice Response")
     with st.spinner("Synthesizing..."):
         tts = gTTS(text=custom_text, lang='en')
         audio_fp = io.BytesIO()
