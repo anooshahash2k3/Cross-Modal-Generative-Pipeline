@@ -22,7 +22,7 @@ stt_pipe = load_stt()
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.header("🎙️ Voice to Image")
+    st.header("Voice to Image")
     audio_image = st.audio_input("Record to generate art:", key="audio_image")
 
 with col2:
