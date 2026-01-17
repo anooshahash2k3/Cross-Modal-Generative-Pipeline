@@ -7,7 +7,7 @@ import time
 
 # --- 1. SETUP ---
 st.set_page_config(page_title="AI Creative Engine", layout="wide")
-st.title("🎨 Cross-Modal Creative Engine")
+st.title("Cross-Modal Creative Engine")
 st.markdown("---")
 
 # --- 2. LOAD MODELS ---
@@ -26,11 +26,11 @@ with col1:
     audio_image = st.audio_input("Record to generate art:", key="audio_image")
 
 with col2:
-    st.header("📝 Speech to Text")
+    st.header("Speech to Text")
     audio_stt = st.audio_input("Record to transcribe:", key="audio_stt")
 
 with col3:
-    st.header("🔊 Text to Speech")
+    st.header("Text to Speech")
     custom_text = st.text_input("Type to hear AI voice:")
 
 # --- 4. PROCESSING LOGIC ---
@@ -69,7 +69,7 @@ if custom_text:
         st.audio(audio_fp)
 
 # --- 5. DR. CORNER ---
-with st.expander("🎓 Technical Summary for Dr. of AI"):
+with st.expander("Technical Summary"):
     st.write("- **Automatic Speech Recognition (ASR):** Using OpenAI Whisper Tiny.")
     st.write("- **Text-to-Image:** Latent Diffusion via Flux API.")
     st.write("- **Speech Synthesis:** Concatenative TTS via gTTS.")
